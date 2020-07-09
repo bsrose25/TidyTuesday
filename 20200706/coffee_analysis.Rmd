@@ -51,19 +51,19 @@ coffee_ratings %>%
   ggplot(aes(x = processing_method, 
              y = total_cup_points)) +
   geom_jitter(aes(color = processing_method), 
-              height = 0, width = 0.05, , 
-              size = 3, alpha = 0.6) +
-  # geom_boxplot(fill = NA, outlier.size = 0) +
+              height = 0, width = 0.08, , 
+              size = 1, alpha = 0.6) +
+  geom_boxplot(fill = NA, outlier.shape = NA, 
+               width = 0.12, lwd = 0.6) +
   geom_violin(fill = NA, lwd = 0.7) +
-  stat_summary(fun.data="mean_sdl",  fun.args = list(mult=1),
-    geom = "pointrange",
-    position = position_dodge(0.5), 
-    color = 'black', lwd = 0.7) +
+  # stat_summary(fun.data="mean_sdl",  fun.args = list(mult=1),
+  #   geom = "pointrange",
+  #   position = position_dodge(0.5), 
+  #   color = 'black', lwd = 0.7) +
   # coord_flip() +
   scale_y_continuous(breaks = seq(50, 100, 5))  +
-  labs(x = "Processing Method", 
-       y = "Total Cup Points", 
-       title = "Coffee Score by Processing Method") + 
+  labs(x = "", 
+       y = "Total Cup Points") + 
   scale_color_manual(values = c("#FA9D9D", "#71513F")) +
   theme_minimal() +
   theme(axis.title.x = element_text(size = 12),
@@ -101,12 +101,11 @@ b <- coffee_ratings %>%
   # coord_flip() +
   scale_y_continuous(limits = c(5.5, 10), breaks = seq(0, 10, 1))  +
   labs(y = "Score", x = "",
-       color = "Processing method",
-       title = "Score components") + 
+       color = "Processing method") + 
   scale_color_manual(values = c("#FA9D9D", "#71513F")) +
   facet_wrap(~Attribute, ncol = 5) +
   theme_classic() +
-  theme(axis.title.x = element_text(size = 12),
+  theme(axis.title.x = element_blank(),
         axis.title.y = element_text(size = 12),
         axis.text.y = element_text( size = 10),
         axis.text.x = element_blank(),
