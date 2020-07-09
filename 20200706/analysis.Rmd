@@ -1,0 +1,121 @@
+---
+title: "20200706_TidyTuesday"
+author: "B Rose"
+date: "7/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(Hmisc)
+library(ggpubr)
+```
+
+
+```{r import}
+# Read in with tidytuesdayR package 
+# This loads the readme and all the datasets for the week of interest
+tuesdata <- tidytuesdayR::tt_load('2020-07-07')
+coffee_ratings <- tuesdata$coffee_ratings
+```
+
+
+```{r explore, echo=FALSE}
+coffee_ratings %>% 
+  count(processing_method)
+  
+  
+summary_proc <- coffee_ratings %>% 
+  group_by(processing_method) %>% 
+  summarise(count = n(), Score = mean(total_cup_points),
+            Aroma = mean(aroma), 
+            Flavor = mean(flavor), Aftertaste = mean(aftertaste), 
+            Acidity = mean(acidity), Body = mean(body), 
+            Balance = mean(balance), Uniformity = mean(uniformity), 
+            Clean_Cup = mean(clean_cup), Sweetness = mean(sweetness), 
+            Cupper_points = mean(cupper_points)) %>% 
+  pivot_longer(-processing_method, names_to = "Attribute", values_to = "Score")
+
+data_summary <- function(x) {
+   m <- mean(x)
+   ymin <- m-sd(x)
+   ymax <- m+sd(x)
+   return(c(y=m,ymin=ymin,ymax=ymax))
+}
+
+ p <-
+coffee_ratings %>% 
+  group_by(processing_method) %>% 
+  filter(processing_method %in% c("Washed / Wet", "Natural / Dry")) %>% 
+  ggplot(aes(x = processing_method, 
+             y = total_cup_points)) +
+  geom_jitter(aes(color = processing_method), 
+              height = 0, width = 0.05, , 
+              size = 3, alpha = 0.6) +
+  # geom_boxplot(fill = NA, outlier.size = 0) +
+  geom_violin(fill = NA, lwd = 0.7) +
+  stat_summary(fun.data="mean_sdl",  fun.args = list(mult=1),
+    geom = "pointrange",
+    position = position_dodge(0.5), 
+    color = 'black', lwd = 0.7) +
+  # coord_flip() +
+  scale_y_continuous(breaks = seq(50, 100, 5))  +
+  labs(x = "Processing Method", 
+       y = "Total Cup Points", 
+       title = "Coffee Score by Processing Method") + 
+  scale_color_manual(values = c("#FA9D9D", "#71513F")) +
+  theme_minimal() +
+  theme(axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text = element_text( size = 10), 
+        axis.line = element_line(size = 1), 
+        axis.ticks = element_line(size = 1), 
+        legend.position = "none", 
+        panel.grid.major.x = element_blank()
+  )
+
+p
+  
+```
+
+```{r}
+
+b <- coffee_ratings %>% 
+  filter(processing_method %in% c("Washed / Wet", "Natural / Dry")) %>% 
+  select(processing_method:cupper_points) %>% 
+  pivot_longer(-processing_method, names_to = "Attribute", values_to = "Score") %>% 
+  ggplot(aes(x = processing_method, 
+             y = Score, 
+             color = processing_method)) +
+  # geom_jitter(position = position_dodge(0.5),
+  #             size = 2, alpha = 0.4) +
+  geom_boxplot(fill = NA, width = 0.5,
+               position = "dodge2",
+               outlier.size = 0.5) +
+  # # geom_violin(fill = NA, lwd = 0.7) +
+  # stat_summary( aes(color = processing_method),
+  #   fun.data="mean_sdl",  fun.args = list(mult=1),
+  #   geom = "pointrange",  size = 0.4,
+  #   position = position_dodge(0.5)) +
+  # coord_flip() +
+  scale_y_continuous(limits = c(5.5, 10), breaks = seq(0, 10, 1))  +
+  labs(y = "Score", x = "",
+       color = "Processing method",
+       title = "Score components") + 
+  scale_color_manual(values = c("#FA9D9D", "#71513F")) +
+  facet_wrap(~Attribute, ncol = 5) +
+  theme_classic() +
+  theme(axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.y = element_text( size = 10),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.position = "bottom",
+        panel.grid.major.y = element_line(color = 'grey', size = 0.2)
+  )
+
+ggarrange(p, b, ncol = 2, widths = c(1, 2))
+
+```
+
