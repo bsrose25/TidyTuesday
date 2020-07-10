@@ -24,27 +24,9 @@ coffee_ratings <- tuesdata$coffee_ratings
 ```{r explore, echo=FALSE}
 coffee_ratings %>% 
   count(processing_method)
-  
-  
-summary_proc <- coffee_ratings %>% 
-  group_by(processing_method) %>% 
-  summarise(count = n(), Score = mean(total_cup_points),
-            Aroma = mean(aroma), 
-            Flavor = mean(flavor), Aftertaste = mean(aftertaste), 
-            Acidity = mean(acidity), Body = mean(body), 
-            Balance = mean(balance), Uniformity = mean(uniformity), 
-            Clean_Cup = mean(clean_cup), Sweetness = mean(sweetness), 
-            Cupper_points = mean(cupper_points)) %>% 
-  pivot_longer(-processing_method, names_to = "Attribute", values_to = "Score")
 
-data_summary <- function(x) {
-   m <- mean(x)
-   ymin <- m-sd(x)
-   ymax <- m+sd(x)
-   return(c(y=m,ymin=ymin,ymax=ymax))
-}
-
- p <-
+#violin plot of overall scores
+p <-
 coffee_ratings %>% 
   group_by(processing_method) %>% 
   filter(processing_method %in% c("Washed / Wet", "Natural / Dry")) %>% 
@@ -56,11 +38,6 @@ coffee_ratings %>%
   geom_boxplot(fill = NA, outlier.shape = NA, 
                width = 0.12, lwd = 0.6) +
   geom_violin(fill = NA, lwd = 0.7) +
-  # stat_summary(fun.data="mean_sdl",  fun.args = list(mult=1),
-  #   geom = "pointrange",
-  #   position = position_dodge(0.5), 
-  #   color = 'black', lwd = 0.7) +
-  # coord_flip() +
   scale_y_continuous(breaks = seq(50, 100, 5))  +
   labs(x = "", 
        y = "Total Cup Points") + 
@@ -76,11 +53,10 @@ coffee_ratings %>%
   )
 
 p
-  
 ```
 
 ```{r}
-
+#faceted box plots for score components
 b <- coffee_ratings %>% 
   filter(processing_method %in% c("Washed / Wet", "Natural / Dry")) %>% 
   select(processing_method:cupper_points) %>% 
@@ -88,17 +64,9 @@ b <- coffee_ratings %>%
   ggplot(aes(x = processing_method, 
              y = Score, 
              color = processing_method)) +
-  # geom_jitter(position = position_dodge(0.5),
-  #             size = 2, alpha = 0.4) +
   geom_boxplot(fill = NA, width = 0.5,
                position = "dodge2",
                outlier.size = 0.5) +
-  # # geom_violin(fill = NA, lwd = 0.7) +
-  # stat_summary( aes(color = processing_method),
-  #   fun.data="mean_sdl",  fun.args = list(mult=1),
-  #   geom = "pointrange",  size = 0.4,
-  #   position = position_dodge(0.5)) +
-  # coord_flip() +
   scale_y_continuous(limits = c(5.5, 10), breaks = seq(0, 10, 1))  +
   labs(y = "Score", x = "",
        color = "Processing method") + 
@@ -114,6 +82,7 @@ b <- coffee_ratings %>%
         panel.grid.major.y = element_line(color = 'grey', size = 0.2)
   )
 
+#arrange the graphs into one figure
 ggarrange(p, b, ncol = 2, widths = c(1, 2))
 
 ```
