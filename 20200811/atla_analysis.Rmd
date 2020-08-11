@@ -1,0 +1,111 @@
+---
+title: "atla_analysis"
+author: "B Rose"
+date: "8/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tvthemes)
+library(scales)
+library(gapminder)
+library(extrafont)
+loadfonts(quiet = TRUE)
+```
+
+```{r input}
+tuesdata <- tidytuesdayR::tt_load('2020-08-11')
+avatar <- tuesdata$avatar
+```
+
+Data manipulation
+```{r character arc} 
+#pull top 10 speakers
+top_list <- avatar %>% 
+  filter(character != "Scene Description") %>% 
+  group_by(across(c(character, element))) %>% 
+  summarise(count = n()) %>% 
+  ungroup() %>% 
+  slice_max(count, n = 10) %>% 
+  arrange(desc(count)) %>% 
+  pull(character)
+
+#add elements, chapter id, word counts
+avatar <- avatar %>% 
+  mutate(
+    word_count = str_count(character_words),
+    chapter.id = book_num + chapter_num/100, 
+    element = case_when(
+      character %in% c("Zuko", "Azula", "Iroh", "Zhao") ~ "fire", 
+      character %in% c("Katara", "Sokka") ~ "water", 
+      character %in% c("Toph", "Jet", "Suki") ~ "earth", 
+      character == "Aang" ~ "air"
+    )
+  )
+```
+
+Total words spoken
+```{r}
+import_avatar()
+
+show_col(avatar_pal("FireNation")(5))
+
+cols <- c(avatar_pal("AirNomads")(1), avatar_pal("EarthKingdom")(5)[1],  avatar_pal("FireNation")(2)[2], avatar_pal("WaterTribe")(5)[5])
+
+avatar %>% 
+  group_by(across(c(character, element))) %>% 
+  summarise(count = n()) %>% 
+  filter(character %in% top_list) %>% 
+  # histogram
+  ggplot(aes(x = reorder(character, count), 
+             y = count,
+             fill = element)) +
+  geom_bar(stat = "identity", alpha = 1) +
+  coord_flip() +
+  labs(title = "Most lines throughout the series", y = "Total lines", 
+       fill = "Nation") +
+  scale_fill_manual(values = cols) +
+  theme_avatar(title.font = "Slayer", 
+               text.font = "Slayer") +
+    theme(
+      panel.grid.major.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line = element_line(size = 1),
+        legend.position = "right"
+    ) -> total_histogram
+```
+
+
+```{r}
+cols2 <- c(avatar_pal("AirNomads")(1), avatar_pal("WaterTribe")(5)[5], avatar_pal("WaterTribe")(5)[1], 
+           avatar_pal("EarthKingdom")(5)[1],  avatar_pal("FireNation")(2)[2])
+
+avatar %>% 
+  filter(character != "Scene Description") %>% 
+  count(chapter.id, chapter, character, name = 'tally') %>%
+  group_by(chapter) %>% 
+  mutate(pct = tally/sum(tally)*100) %>% 
+  filter(character %in% top_list[1:5]) %>% 
+  #plot
+  ggplot(aes(x = as.numeric(as.factor(chapter.id)), 
+             y = pct, 
+             fill = character)) +
+  geom_vline(xintercept = 20.5) +
+  geom_vline(xintercept = 40.5) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = cols2) +
+  labs(y = "Spoken lines in episode (%)",
+       x = "Chapter",
+       fill = "Character") +
+  theme_avatar(
+    title.font = "Slayer",
+    text.font = "Slayer", 
+    title.size = 18,
+    text.size = 18
+  ) +
+  theme(
+    legend.position = "bottom", 
+  ) -> full_dialogue
+```
