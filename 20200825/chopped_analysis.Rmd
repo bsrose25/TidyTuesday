@@ -1,0 +1,129 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidytuesdayR)
+library(ggpubr)
+```
+
+```{r init}
+tuesdata <- tidytuesdayR::tt_load('2020-08-25')
+chopped <- tuesdata$chopped
+```
+
+```{r explore}
+#pivot into judges dataset
+chopped %>% 
+  select(season, series_episode, judge1, judge2, judge3) %>% 
+  pivot_longer(-c(season, series_episode), names_to = "judge_number", values_to = "judge_name") -> judges
+
+#fix errors (there's definitely a better way to do this)
+judges$judge_name <- ifelse(judges$judge_name == "Aarón Sanchez", 
+                            "Aarón Sánchez", judges$judge_name)
+judges$judge_name <- ifelse(judges$judge_name =="Amanda Frietag" | judges$judge_name =="Amanda Freita"
+                            , "Amanda Freitag", judges$judge_name)
+judges$judge_name <- ifelse(judges$judge_name =="Chris Santo", 
+                            "Chris Santos", judges$judge_name)
+judges$judge_name <- ifelse(judges$judge_name =="Geoffrey Zacharian", 
+                            "Geoffrey Zakarian", judges$judge_name)
+judges$judge_name <- ifelse(judges$judge_name =="Maneet Chauhaun", 
+                            "Maneet Chauhan", judges$judge_name)
+judges$judge_name <- ifelse(judges$judge_name =="Jody William", 
+                            "Jody Williams", judges$judge_name)
+
+judges %>% 
+  count(judge_name) %>% 
+  arrange(desc(n)) %>% 
+  top_n(9) %>% 
+  select(judge_name) -> top_judges
+
+judges %>% 
+  count(judge_name) %>% 
+  arrange(desc(n)) 
+```
+
+```{r histogram}
+judges %>% 
+  filter(judge_name %in% top_judges$judge_name) %>% 
+  add_count(judge_name) %>% 
+  ggplot(aes(season)) +
+  geom_histogram(binwidth = 1, fill = "#E1A51B") +
+  facet_grid(fct_reorder(judge_name, n, .desc = TRUE) ~., 
+             switch = "y") +
+  scale_x_continuous(limits = c(0, 45)) +
+  labs(x = "SEASON", title = "FREQUENCY OF APPEARANCE BY SEASON") +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    title = element_text(color = "#F8F8F8", face = "bold",size = 16),
+    axis.title = element_text(color = "#F8F8F8", face = "bold",size = 14), 
+    axis.text.x = element_text(color = "#F8F8F8", size = 10),
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank(),
+    # axis.line.y = element_line(color = "#868684"),
+    # strip.text = element_blank(),
+    strip.background = element_blank(),
+    strip.text.y.left = element_text(color = "#F8F8F8", face = "bold", size = 12,
+                              angle = 0, hjust = 0),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(color = "#868684"),
+    panel.background = element_rect(fill = "#353533",
+                                colour = "#353533",
+                                size = 0.5, linetype = "solid"),
+    plot.background = element_rect(fill = "#353533",
+                                   colour = "#353533",
+                                size = 0.5, linetype = "solid")
+  ) -> hist
+```
+
+```{r bar graph}
+judges %>% 
+  group_by(judge_name) %>% 
+  summarise(count = n()) %>% 
+  top_n(9) %>% 
+  ggplot(aes(
+    x = fct_reorder(judge_name, count, .desc = FALSE), 
+    y = count
+  )) +
+  geom_bar(stat = "identity", alpha = 1, width= 0.4, fill = "#E1A51B") +
+  scale_y_continuous(expand = c(0, 0)) +
+  coord_flip()+
+  labs(y = "TOTAL APPEARANCES", title = "TOTAL SERIES APPEARANCES") +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.title = element_text(color = "#F8F8F8", face = "bold", size = 14), 
+    # title = element_text(color = "#F8F8F8", face = "bold",size = 16),
+    title = element_blank(),
+    axis.text.x = element_text(color = "#F8F8F8", size = 10), 
+    # axis.text.y = element_text(color = "#F8F8F8", face = "bold", size = 12), 
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank(),
+    axis.line.x = element_line(color = "#868684"),
+    axis.line.y = element_line(color = "#868684", size = 1),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(color = "#868684"),
+    panel.background = element_rect(fill = "#353533",
+                                colour = "#353533",
+                                size = 0.5, linetype = "solid"),
+    plot.background = element_rect(fill = "#353533",
+                                   colour = "#353533",
+                                size = 0.5, linetype = "solid"),
+    plot.margin = unit(c(1.5,1,0.3,0), "cm")
+  ) -> bar
+
+```
+
+
+```{r combine}
+ggpubr::ggarrange(hist, bar, ncol = 2, widths = c(3, 1))
+
+```
+
+
