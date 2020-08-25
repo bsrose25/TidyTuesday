@@ -57,6 +57,7 @@ judges %>%
   facet_grid(fct_reorder(judge_name, n, .desc = TRUE) ~., 
              switch = "y") +
   scale_x_continuous(limits = c(0, 45)) +
+  scale_y_continuous(position = "right") +
   labs(x = "SEASON", title = "FREQUENCY OF APPEARANCE BY SEASON") +
   theme_minimal() +
   theme(
@@ -65,10 +66,9 @@ judges %>%
                          family = "Eurostile", size = 12),
     axis.title = element_text(color = "#F8F8F8", face = "bold",
                               family = "Eurostile", size = 12), 
-    axis.text.x = element_text(color = "#F8F8F8", 
+    axis.text = element_text(color = "#F8F8F8", 
                                family = "Eurostile", size = 10),
     axis.title.y = element_blank(),
-    axis.text.y = element_blank(),
     strip.background = element_blank(),
     strip.text.y.left = element_text(color = "#F8F8F8", face = "bold", 
                                      size = 14, family = "Eurostile",
@@ -81,7 +81,8 @@ judges %>%
                                     size = 0.5, linetype = "solid"),
     plot.background = element_rect(fill = "#353533",
                                    colour = "#353533",
-                                   size = 0.5, linetype = "solid")
+                                   size = 0.5, linetype = "solid"),
+    plot.margin = unit(c(5.5, 15, 5.5, 5.5), "pt")
     
   ) -> hist
 ```
@@ -107,7 +108,8 @@ judges %>%
     axis.title = element_text(color = "#F8F8F8", face = "bold", 
                               family = "Eurostile", size = 12), 
     axis.text.x = element_text(color = "#F8F8F8", 
-                               family = "Eurostile",size = 10), 
+                               family = "Eurostile",size = 10, 
+                               margin = margin(t = 1, r = 0, b = 0, l = 0)), 
     axis.text.y = element_blank(),
     axis.title.y = element_blank(),
     axis.line.x = element_line(color = "#868684"),
@@ -120,7 +122,8 @@ judges %>%
                                     size = 0.5, linetype = "solid"),
     plot.background = element_rect(fill = "#353533",
                                    colour = "#353533",
-                                   size = 0.5, linetype = "solid")
+                                   size = 0.5, linetype = "solid"), 
+    plot.margin = unit(c(5.5, 20, 5.5, 5.5), "pt")
   ) -> bar
 
 ```
@@ -131,7 +134,7 @@ plot_row <- plot_grid(hist, bar, rel_widths = c(5, 2))
 
 title <- ggdraw() + 
   draw_label(
-    "CHOPPED: APPEARANCE FREQUENCY OF MAIN JUDGES",
+    "CHOPPED: APPEARANCE FREQUENCY OF REGULAR JUDGES",
     fontface = 'bold',
     fontfamily = "Eurostile",
     color = "#F8F8F8",
