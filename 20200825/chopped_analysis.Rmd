@@ -7,7 +7,9 @@ output: html_notebook
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(tidytuesdayR)
-library(ggpubr)
+library(extrafont)
+library(cowplot)
+extrafont::loadfonts()
 ```
 
 ```{r init}
@@ -59,25 +61,28 @@ judges %>%
   theme_minimal() +
   theme(
     legend.position = "none",
-    title = element_text(color = "#F8F8F8", face = "bold",size = 16),
-    axis.title = element_text(color = "#F8F8F8", face = "bold",size = 14), 
-    axis.text.x = element_text(color = "#F8F8F8", size = 10),
+    title = element_text(color = "#E1A51B", 
+                         family = "Eurostile", size = 12),
+    axis.title = element_text(color = "#F8F8F8", face = "bold",
+                              family = "Eurostile", size = 12), 
+    axis.text.x = element_text(color = "#F8F8F8", 
+                               family = "Eurostile", size = 10),
     axis.title.y = element_blank(),
     axis.text.y = element_blank(),
-    # axis.line.y = element_line(color = "#868684"),
-    # strip.text = element_blank(),
     strip.background = element_blank(),
-    strip.text.y.left = element_text(color = "#F8F8F8", face = "bold", size = 12,
-                              angle = 0, hjust = 0),
+    strip.text.y.left = element_text(color = "#F8F8F8", face = "bold", 
+                                     size = 14, family = "Eurostile",
+                                     angle = 0, hjust = 0),
     panel.grid.minor = element_blank(),
     panel.grid.major.x = element_blank(),
     panel.grid.major.y = element_line(color = "#868684"),
     panel.background = element_rect(fill = "#353533",
-                                colour = "#353533",
-                                size = 0.5, linetype = "solid"),
+                                    colour = "#353533",
+                                    size = 0.5, linetype = "solid"),
     plot.background = element_rect(fill = "#353533",
                                    colour = "#353533",
-                                size = 0.5, linetype = "solid")
+                                   size = 0.5, linetype = "solid")
+    
   ) -> hist
 ```
 
@@ -97,11 +102,12 @@ judges %>%
   theme_minimal() +
   theme(
     legend.position = "none",
-    axis.title = element_text(color = "#F8F8F8", face = "bold", size = 14), 
-    # title = element_text(color = "#F8F8F8", face = "bold",size = 16),
-    title = element_blank(),
-    axis.text.x = element_text(color = "#F8F8F8", size = 10), 
-    # axis.text.y = element_text(color = "#F8F8F8", face = "bold", size = 12), 
+    title = element_text(color = "#E1A51B",
+                         family = "Eurostile", size = 12), 
+    axis.title = element_text(color = "#F8F8F8", face = "bold", 
+                              family = "Eurostile", size = 12), 
+    axis.text.x = element_text(color = "#F8F8F8", 
+                               family = "Eurostile",size = 10), 
     axis.text.y = element_blank(),
     axis.title.y = element_blank(),
     axis.line.x = element_line(color = "#868684"),
@@ -110,20 +116,40 @@ judges %>%
     panel.grid.major.y = element_blank(),
     panel.grid.major.x = element_line(color = "#868684"),
     panel.background = element_rect(fill = "#353533",
-                                colour = "#353533",
-                                size = 0.5, linetype = "solid"),
+                                    colour = "#353533",
+                                    size = 0.5, linetype = "solid"),
     plot.background = element_rect(fill = "#353533",
                                    colour = "#353533",
-                                size = 0.5, linetype = "solid"),
-    plot.margin = unit(c(1.5,1,0.3,0), "cm")
+                                   size = 0.5, linetype = "solid")
   ) -> bar
 
 ```
 
 
 ```{r combine}
-ggpubr::ggarrange(hist, bar, ncol = 2, widths = c(3, 1))
+plot_row <- plot_grid(hist, bar, rel_widths = c(5, 2))
 
+title <- ggdraw() + 
+  draw_label(
+    "CHOPPED: APPEARANCE FREQUENCY OF MAIN JUDGES",
+    fontface = 'bold',
+    fontfamily = "Eurostile",
+    color = "#F8F8F8",
+    size = 20,
+    x = 0,
+    hjust = 0
+  ) +
+  theme(
+    plot.margin = margin(0, 0, 0, 7),
+    plot.background = element_rect(fill = "#353533",
+                                   colour = "#353533")
+  )
+
+plot_grid(
+  title, plot_row,
+  ncol = 1,
+  rel_heights = c(0.1, 1)
+) -> figure
 ```
 
 
