@@ -1,0 +1,156 @@
+---
+title: "Tidy Tuesday 10-19"
+author: "B Rose"
+date: "10/19/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(janitor)
+library(ggpubr)
+library(RColorBrewer)
+library(extrafont)
+library(grDevices)
+font_import()
+loadfonts(device = "win")
+```
+
+
+```{r import}
+data <- tidytuesdayR::tt_load('2020-10-20')
+awards <- data$beer_awards
+states <- read_csv("census_regions.csv", col_names = TRUE)
+```
+
+```{r prep}
+awards %>% 
+  left_join(states, by = c("state" = "State Code")) %>% 
+  clean_names("snake") -> awards
+
+```
+
+```{r plot}
+awards %>% 
+  group_by(year) %>% 
+  mutate(n_awards_year = n()) %>% 
+  group_by(year, region, n_awards_year) %>% 
+  summarise(n_awards = n()) %>% 
+  mutate(pct_awards = (n_awards/n_awards_year)*100) -> regional_share
+
+
+regional_share %>% 
+  drop_na() %>% 
+  ggplot(aes(x = year, y = pct_awards, 
+             fill = fct_relevel(region,c("Northeast", "South", "Midwest", "West")))) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  facet_wrap(~fct_relevel(region,c("Northeast", "South", "Midwest", "West")),
+              ncol = 1) +
+  labs(x = "Year", y = "% Share of Awards", fill = "Region")
+  theme_minimal()
+  
+#area chart
+regional_share %>% 
+  drop_na %>% 
+  ggplot(aes(x = year, y = n_awards, 
+             fill = fct_relevel(region,c("Northeast", "South", "Midwest", "West")))) +
+  geom_area() +
+  scale_fill_manual(values = brewer.pal(n = 9, name = "YlOrBr")[c(3, 5, 7, 9)]) +
+    labs(x = "Year", y = "Total Awards", fill = "Region", 
+         title = "GREAT AMERICAN BEER FESTIVAL AWARD WINNERS",
+         subtitle = "TOTAL AWARDS BY GEOGRAPHIC REGION 1987-2020") +
+  scale_x_continuous(expand = c(0, 0), breaks = seq(1990, 2020, by = 5)) +
+  scale_y_continuous(expand = c(0, 0), breaks = seq(0, 300, 50)) +
+  theme_classic() +
+  theme(
+  # text = element_text(size = 14, color = "#EBF1F4"),
+  text = element_text(size = 14, color = "#000000", family= "Tw Cen MT"),
+  title = element_text(size = 16, color = "#000000", family= "Tw Cen MT"),
+  plot.title = element_text(size = 24,  face = "bold", color = "#255E82"),
+  plot.subtitle = element_text(size = 16,  face = "bold", color = "#C58F40", 
+                            margin = margin(0, 0, 30, 0), family= "Tw Cen MT"),
+  axis.text = element_text(size = 14, color = "#000000", family= "Tw Cen MT"),
+  axis.line = element_line(size = 1, color = "#000000"), 
+  axis.ticks = element_blank(), 
+  panel.grid.major.y = element_line(size = 0.4, color = "#000000"), 
+  panel.background = element_rect(fill = "#FFFFFF", color = "#FFFFFF"),
+  plot.background = element_rect(fill = "#FFFFFF"), 
+  legend.background = element_rect(fill = "#FFFFFF"),
+  plot.margin = margin(1, 1, 1, 1, "cm")
+
+    )-> area
+```
+
+
+```{r table}
+
+awards %>%
+  drop_na() %>% 
+  group_by(region, category) %>% 
+  summarise(n_cat = n()) %>% 
+  slice_max(n = 5, order_by = n_cat, with_ties = FALSE) %>% 
+  ###table code
+  gt() %>% 
+  cols_width(
+    vars(region) ~ px(200), 
+    vars(category) ~ px(320),
+    vars(n_cat) ~ px(50)
+  ) %>% 
+  #rename columns
+  cols_label(
+    region = "",
+    category = "", 
+    n_cat  = "",
+  ) %>% 
+    #format column/group labels  
+  tab_style(
+    style = list(
+      cell_text(color = "black", font = "Helvetica", weight = "bold")
+      ),
+    locations = list(
+      cells_row_groups(), 
+      cells_column_labels(everything())
+    )
+  ) %>% 
+  #align columns
+  cols_align(align = "right",
+             columns = TRUE) %>% 
+  cols_align(align = "left",
+             columns = vars(region, category)) %>% 
+  #header
+  tab_header(
+    title = md("**Top 5 Categories in Each Region**"),
+    subtitle = "Total awards won per category 1987-2020"
+  ) %>% 
+  #theme
+  tab_options(
+    heading.align = "left",
+    heading.subtitle.font.size = 14,
+    heading.title.font.size = 22,
+    heading.title.font.weight = "bold",
+    heading.border.bottom.color = "white",
+    heading.border.bottom.width = px(20),
+    row_group.border.top.color = "black",
+    row_group.border.top.width = px(2),
+    row_group.border.bottom.color = "black",
+    column_labels.border.top.color = "white",
+    column_labels.border.top.width = px(2),
+    column_labels.border.bottom.color = "black",
+    column_labels.border.bottom.width= px(2),
+    table_body.hlines.color = "white",
+    table.border.bottom.color = "white",
+    table.border.bottom.width = px(2),
+    table.border.top.color = "white",
+    table.border.top.width = px(8)
+  ) -> table
+table
+
+```
+
+
+```{r arrange}
+area
+```
+
+
